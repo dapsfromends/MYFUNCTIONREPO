@@ -12,22 +12,20 @@
     "id": "Microsoft.Azure.Functions.ExtensionBundle",
     "version": "[4.*, 5.0.0)"
   },
-  "extensions": {
-    "http": {
-      "routePrefix": "api",
-      "cors": {
-        "allowedOrigins": [
-          "*"
-        ],
-        "allowedMethods": [
-          "GET", "POST", "PUT", "DELETE", "PATCH"
-        ],
-        "allowedHeaders": [
-          "Content-Type"
-        ],
-        "exposedHeaders": [],
-        "maxAge": 3600
-      }
-    }
+  "cors": {
+    "allowedOrigins": [
+      "*"
+    ],
+    "allowedMethods": [
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE",
+      "PATCH"
+    ],
+    "allowedHeaders": [
+      "Content-Type"
+    ],
+    "maxAge": 3600
   }
 }
