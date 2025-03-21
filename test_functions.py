@@ -4,14 +4,12 @@ import pytest
 from datetime import datetime, timedelta
 import uuid
 
-# Import all functions from function_app.py
 from function_app import (
-    
-    create_task, 
-    
+    create_task,
+    get_tasks,
+
 )
 
-# Mock data setup
 @pytest.fixture
 def reset_tasks():
     """Reset the tasks list before each test"""
@@ -59,7 +57,7 @@ def populated_tasks(reset_tasks, sample_task):
 
 # Test creating a task
 def test_create_task(reset_tasks):
-    # Create a mock HTTP request
+    
     task_data = {
         "title": "New Task",
         "description": "This is a new task"
@@ -77,14 +75,32 @@ def test_create_task(reset_tasks):
     
     # Check response
     assert resp.status_code == 201
-    
-    # Parse the returned JSON
     result = json.loads(resp.get_body().decode())
     
-    # Verify the task was created with the right attributes
     assert result["title"] == "New Task"
     assert result["description"] == "This is a new task"
     assert result["status"] == "pending"
     assert result["completed_at"] is None
     assert "id" in result
     assert "created_at" in result
+
+# Test get all tasks
+def test_get_tasks(populated_tasks):
+    
+    req = func.HttpRequest(
+        method='GET',
+        url='/api/tasks',
+        body=None,
+        params={}
+    )
+    
+    # Call our function
+    resp = get_tasks(req)
+    
+    # Check response
+    assert resp.status_code == 200
+    result = json.loads(resp.get_body().decode())
+    assert len(result) == 2
+    assert any(task["title"] == "Test Task" for task in result)
+    assert any(task["title"] == "Completed Task" for task in result)
+
