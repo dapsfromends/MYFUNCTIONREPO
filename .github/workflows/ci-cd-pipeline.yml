@@ -1,4 +1,4 @@
-name: CI/CD Pipeline for TaskHub API
+name: CI/CD Pipeline for MYFUNCTIONAPP
 on:
   push:
     branches: [ main ]
