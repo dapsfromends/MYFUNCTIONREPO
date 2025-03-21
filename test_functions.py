@@ -6,7 +6,7 @@ import uuid
 
 # Import all functions from function_app.py
 from function_app import (
-    healthcheck, 
+    
     create_task, 
     get_tasks, 
     get_task_by_id, 
