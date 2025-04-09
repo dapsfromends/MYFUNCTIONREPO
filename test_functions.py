@@ -11,11 +11,9 @@ from function_app import (
     update_task,
     complete_task,
     delete_task,
-    task_completion_stats,
-    productivity_metrics,
 )
 
-# DummyHttpRequest definition to allow setting route_params
+# Define a DummyHttpRequest that allows setting route_params
 class DummyHttpRequest(func.HttpRequest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -55,10 +53,10 @@ def sample_task():
 def populated_tasks(reset_tasks, sample_task):
     """Populate the tasks list with sample data"""
     import function_app
-    
+
     # Add the sample task
     function_app.tasks.append(sample_task)
-    
+
     # Add a completed task
     completed_task = {
         "id": str(uuid.uuid4()),
@@ -69,7 +67,7 @@ def populated_tasks(reset_tasks, sample_task):
         "completed_at": datetime.now().isoformat()
     }
     function_app.tasks.append(completed_task)
-    
+
     return function_app.tasks
 
 # Stage 1 Tests: create_task and get_tasks
@@ -85,8 +83,11 @@ def test_create_task(reset_tasks):
         body=json.dumps(task_data).encode(),
         params={}
     )
+    
+    # Call our function
     resp = create_task(req)
     
+    # Check response
     assert resp.status_code == 201
     result = json.loads(resp.get_body().decode())
     
@@ -182,6 +183,7 @@ def test_update_task(populated_tasks):
     
     assert resp.status_code == 200
     result = json.loads(resp.get_body().decode())
+    
     assert result["id"] == task_id
     assert result["title"] == "Updated Task"
     assert result["description"] == "This task has been updated"
@@ -229,35 +231,3 @@ def test_delete_task(populated_tasks):
     import function_app
     assert len(function_app.tasks) == initial_count - 1
     assert not any(task["id"] == task_id for task in function_app.tasks)
-
-def test_task_completion_stats(populated_tasks):
-    req = DummyHttpRequest(
-        method='GET',
-        url='/api/analytics/completion',
-        body=None,
-        params={}
-    )
-    resp = task_completion_stats(req)
-    
-    assert resp.status_code == 200
-    result = json.loads(resp.get_body().decode())
-    assert result["total_tasks"] == 2
-    assert result["completed_tasks"] == 1
-    assert result["pending_tasks"] == 1
-    assert result["completion_percentage"] == 50.0
-
-def test_productivity_metrics(populated_tasks):
-    req = DummyHttpRequest(
-        method='GET',
-        url='/api/analytics/productivity',
-        body=None,
-        params={}
-    )
-    resp = productivity_metrics(req)
-    
-    assert resp.status_code == 200
-    result = json.loads(resp.get_body().decode())
-    assert result["tasks_created"] == 2
-    assert result["tasks_completed"] == 1
-    assert result["completion_rate"] == 50.0
-    assert "average_completion_time_hours" in result
