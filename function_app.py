@@ -163,3 +163,59 @@ def update_task(req: func.HttpRequest) -> func.HttpResponse:
             status_code=500
         )
 
+# Delete task
+@app.route(route="tasks/{id}", methods=["DELETE"])
+def delete_task(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info('Delete Task function processed a request.')
+    
+    # Get task ID from route
+    task_id = req.route_params.get('id')
+    logging.info(f'Attempting to delete task with ID: {task_id}')
+    
+    # Find task with matching ID
+    task_index = next((i for i, t in enumerate(tasks) if t['id'] == task_id), None)
+    
+    if task_index is None:
+        logging.warning(f'Task with ID {task_id} not found for deletion')
+        return func.HttpResponse(
+            "Task not found",
+            status_code=404
+        )
+    
+    # Remove task from list
+    deleted_task = tasks.pop(task_index)
+    logging.info(f'Successfully deleted task: "{deleted_task["title"]}"')
+    
+    return func.HttpResponse(
+        json.dumps({"message": "Task deleted successfully", "task": deleted_task}),
+        mimetype="application/json"
+    )
+
+# Mark task as complete
+@app.route(route="tasks/{id}/complete", methods=["PATCH"])
+def complete_task(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info('Complete Task function processed a request.')
+    
+    # Get task ID from route
+    task_id = req.route_params.get('id')
+    logging.info(f'Marking task with ID {task_id} as complete')
+    
+    # Find task with matching ID
+    task_index = next((i for i, t in enumerate(tasks) if t['id'] == task_id), None)
+    
+    if task_index is None:
+        logging.warning(f'Task with ID {task_id} not found for completion')
+        return func.HttpResponse(
+            "Task not found",
+            status_code=404
+        )
+    
+    # Update task status and completion time
+    tasks[task_index]["status"] = "completed"
+    tasks[task_index]["completed_at"] = datetime.now().isoformat()
+    logging.info(f'Task marked as complete: "{tasks[task_index]["title"]}"')
+    
+    return func.HttpResponse(
+        json.dumps(tasks[task_index]),
+        mimetype="application/json"
+    )

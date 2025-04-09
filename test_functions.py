@@ -9,6 +9,9 @@ from function_app import (
     get_tasks,
     get_task_by_id,
     update_task,
+    delete_task, 
+    complete_task,
+
 )
 
 
@@ -184,3 +187,62 @@ def test_update_task(populated_tasks):
     assert result["title"] == "Updated Task"
     assert result["description"] == "This task has been updated"
     assert result["status"] == "in-progress"
+
+# Test complete task
+def test_complete_task(populated_tasks):
+    task_id = populated_tasks[0]["id"]
+    
+    # Create a mock HTTP request
+    req = func.HttpRequest(
+        method='PATCH',
+        url=f'/api/tasks/{task_id}/complete',
+        body=None,
+        params={}
+    )
+    req.route_params = {"id": task_id}
+    
+    # Call our function
+    resp = complete_task(req)
+    
+    # Check response
+    assert resp.status_code == 200
+    
+    # Parse the returned JSON
+    result = json.loads(resp.get_body().decode())
+    
+    # Verify the task was completed
+    assert result["id"] == task_id
+    assert result["status"] == "completed"
+    assert result["completed_at"] is not None
+
+# Test delete task
+def test_delete_task(populated_tasks):
+    task_id = populated_tasks[0]["id"]
+    initial_count = len(populated_tasks)
+    
+    # Create a mock HTTP request
+    req = func.HttpRequest(
+        method='DELETE',
+        url=f'/api/tasks/{task_id}',
+        body=None,
+        params={}
+    )
+    req.route_params = {"id": task_id}
+    
+    # Call our function
+    resp = delete_task(req)
+    
+    # Check response
+    assert resp.status_code == 200
+    
+    # Parse the returned JSON
+    result = json.loads(resp.get_body().decode())
+    
+    # Verify the response contains the deleted task
+    assert result["message"] == "Task deleted successfully"
+    assert result["task"]["id"] == task_id
+    
+    # Verify the task was actually removed
+    import function_app
+    assert len(function_app.tasks) == initial_count - 1
+    assert not any(task["id"] == task_id for task in function_app.tasks)
