@@ -219,3 +219,70 @@ def complete_task(req: func.HttpRequest) -> func.HttpResponse:
         json.dumps(tasks[task_index]),
         mimetype="application/json"
     )
+# Analytics: Task completion statistics
+@app.route(route="analytics/completion", methods=["GET"])
+def task_completion_stats(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info('Task Completion Statistics function processed a request.')
+    
+    # Count tasks by status
+    total_tasks = len(tasks)
+    completed_tasks = sum(1 for task in tasks if task["status"] == "completed")
+    pending_tasks = total_tasks - completed_tasks
+    
+    # Calculate completion percentage
+    completion_percentage = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+    
+    # Create statistics object
+    stats = {
+        "total_tasks": total_tasks,
+        "completed_tasks": completed_tasks,
+        "pending_tasks": pending_tasks,
+        "completion_percentage": round(completion_percentage, 2)
+    }
+    
+    logging.info(f'Analytics summary - Total: {total_tasks}, Completed: {completed_tasks}, Pending: {pending_tasks}, Completion Rate: {round(completion_percentage, 2)}%')
+    
+    return func.HttpResponse(
+        json.dumps(stats),
+        mimetype="application/json"
+    )
+
+# Analytics: Productivity metrics
+@app.route(route="analytics/productivity", methods=["GET"])
+def productivity_metrics(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info('Productivity Metrics function processed a request.')
+    
+    # Get optional date parameter (for future filtering)
+    period = req.params.get('period', 'all')
+    logging.info(f'Generating productivity metrics for period: {period}')
+    
+    # Calculate tasks created and completed
+    tasks_created = len(tasks)
+    tasks_completed = sum(1 for task in tasks if task["status"] == "completed")
+    
+    # Calculate average completion time (for completed tasks)
+    completion_times = []
+    for task in tasks:
+        if task["status"] == "completed" and task["completed_at"]:
+            created = datetime.fromisoformat(task["created_at"])
+            completed = datetime.fromisoformat(task["completed_at"])
+            completion_time_hours = (completed - created).total_seconds() / 3600
+            completion_times.append(completion_time_hours)
+    
+    avg_completion_time = sum(completion_times) / len(completion_times) if completion_times else 0
+    
+    # Create metrics object
+    metrics = {
+        "period": period,
+        "tasks_created": tasks_created,
+        "tasks_completed": tasks_completed,
+        "completion_rate": round((tasks_completed / tasks_created * 100) if tasks_created > 0 else 0, 2),
+        "average_completion_time_hours": round(avg_completion_time, 2)
+    }
+    
+    logging.info(f'Productivity metrics - Tasks created: {tasks_created}, Tasks completed: {tasks_completed}, Avg completion time: {round(avg_completion_time, 2)} hours')
+    
+    return func.HttpResponse(
+        json.dumps(metrics),
+        mimetype="application/json"
+    )

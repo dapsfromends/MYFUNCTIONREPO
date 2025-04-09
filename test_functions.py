@@ -11,6 +11,8 @@ from function_app import (
     update_task,
     complete_task,
     delete_task,
+    task_completion_stats,
+    productivity_metrics,
 )
 
 # Define a DummyHttpRequest that allows setting route_params
@@ -53,10 +55,10 @@ def sample_task():
 def populated_tasks(reset_tasks, sample_task):
     """Populate the tasks list with sample data"""
     import function_app
-
+    
     # Add the sample task
     function_app.tasks.append(sample_task)
-
+    
     # Add a completed task
     completed_task = {
         "id": str(uuid.uuid4()),
@@ -67,10 +69,12 @@ def populated_tasks(reset_tasks, sample_task):
         "completed_at": datetime.now().isoformat()
     }
     function_app.tasks.append(completed_task)
-
+    
     return function_app.tasks
 
+# ---------------------
 # Stage 1 Tests: create_task and get_tasks
+# ---------------------
 def test_create_task(reset_tasks):
     task_data = {
         "title": "New Task",
@@ -128,7 +132,9 @@ def test_get_tasks_with_status_filter(populated_tasks):
     assert result[0]["title"] == "Completed Task"
     assert result[0]["status"] == "completed"
 
+# ---------------------
 # Stage 2 Tests: get_task_by_id and update_task
+# ---------------------
 def test_get_task_by_id(populated_tasks):
     task_id = populated_tasks[0]["id"]
     
@@ -189,7 +195,9 @@ def test_update_task(populated_tasks):
     assert result["description"] == "This task has been updated"
     assert result["status"] == "in-progress"
 
+# ---------------------
 # Stage 3 Tests: complete_task and delete_task
+# ---------------------
 def test_complete_task(populated_tasks):
     task_id = populated_tasks[0]["id"]
     
@@ -231,3 +239,42 @@ def test_delete_task(populated_tasks):
     import function_app
     assert len(function_app.tasks) == initial_count - 1
     assert not any(task["id"] == task_id for task in function_app.tasks)
+
+# ---------------------
+# Stage 4 Tests: Analytics endpoints
+# ---------------------
+def test_task_completion_stats(populated_tasks):
+    req = DummyHttpRequest(
+        method='GET',
+        url='/api/analytics/completion',
+        body=None,
+        params={}
+    )
+    # No route_params required here
+    resp = task_completion_stats(req)
+    
+    assert resp.status_code == 200
+    result = json.loads(resp.get_body().decode())
+    # With the populated_tasks fixture, there should be 2 tasks, 1 completed.
+    assert result["total_tasks"] == len(populated_tasks)
+    assert result["completed_tasks"] == 1
+    assert result["pending_tasks"] == len(populated_tasks) - 1
+    # Check for a valid completion percentage calculation
+    assert "completion_percentage" in result
+
+def test_productivity_metrics(populated_tasks):
+    req = DummyHttpRequest(
+        method='GET',
+        url='/api/analytics/productivity',
+        body=None,
+        params={}
+    )
+    # No route_params required here
+    resp = productivity_metrics(req)
+    
+    assert resp.status_code == 200
+    result = json.loads(resp.get_body().decode())
+    assert "tasks_created" in result
+    assert "tasks_completed" in result
+    assert "completion_rate" in result
+    assert "average_completion_time_hours" in result
