@@ -9,12 +9,13 @@ from function_app import (
     get_tasks,
     get_task_by_id,
     update_task,
-    delete_task, 
     complete_task,
-
+    delete_task,
+    task_completion_stats,
+    productivity_metrics,
 )
 
-
+# DummyHttpRequest definition to allow setting route_params
 class DummyHttpRequest(func.HttpRequest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -71,9 +72,8 @@ def populated_tasks(reset_tasks, sample_task):
     
     return function_app.tasks
 
-# Test creating a task
+# Stage 1 Tests: create_task and get_tasks
 def test_create_task(reset_tasks):
-    
     task_data = {
         "title": "New Task",
         "description": "This is a new task"
@@ -85,11 +85,8 @@ def test_create_task(reset_tasks):
         body=json.dumps(task_data).encode(),
         params={}
     )
-    
-    # Call our function
     resp = create_task(req)
     
-    # Check response
     assert resp.status_code == 201
     result = json.loads(resp.get_body().decode())
     
@@ -100,31 +97,40 @@ def test_create_task(reset_tasks):
     assert "id" in result
     assert "created_at" in result
 
-# Test get all tasks
 def test_get_tasks(populated_tasks):
-    
     req = func.HttpRequest(
         method='GET',
         url='/api/tasks',
         body=None,
         params={}
     )
-    
-    # Call our function
     resp = get_tasks(req)
     
-    # Check response
     assert resp.status_code == 200
     result = json.loads(resp.get_body().decode())
     assert len(result) == 2
     assert any(task["title"] == "Test Task" for task in result)
     assert any(task["title"] == "Completed Task" for task in result)
 
-# Test get task by ID
+def test_get_tasks_with_status_filter(populated_tasks):
+    req = func.HttpRequest(
+        method='GET',
+        url='/api/tasks',
+        body=None,
+        params={"status": "completed"}
+    )
+    resp = get_tasks(req)
+    
+    assert resp.status_code == 200
+    result = json.loads(resp.get_body().decode())
+    assert len(result) == 1
+    assert result[0]["title"] == "Completed Task"
+    assert result[0]["status"] == "completed"
+
+# Stage 2 Tests: get_task_by_id and update_task
 def test_get_task_by_id(populated_tasks):
     task_id = populated_tasks[0]["id"]
     
-    # Create a DummyHttpRequest with route_params support
     req = DummyHttpRequest(
         method='GET',
         url=f'/api/tasks/{task_id}',
@@ -133,17 +139,13 @@ def test_get_task_by_id(populated_tasks):
     )
     req.route_params = {"id": task_id}
     
-    # Call our function
     resp = get_task_by_id(req)
     
-    # Check response
     assert resp.status_code == 200
-    
     result = json.loads(resp.get_body().decode())
     assert result["id"] == task_id
     assert result["title"] == "Test Task"
 
-# Test get task by ID - not found
 def test_get_task_by_id_not_found(reset_tasks):
     non_existent_id = str(uuid.uuid4())
     
@@ -160,10 +162,8 @@ def test_get_task_by_id_not_found(reset_tasks):
     assert resp.status_code == 404
     assert "Task not found" in resp.get_body().decode()
 
-# Test update task
 def test_update_task(populated_tasks):
     task_id = populated_tasks[0]["id"]
-    
     update_data = {
         "title": "Updated Task",
         "description": "This task has been updated",
@@ -182,18 +182,16 @@ def test_update_task(populated_tasks):
     
     assert resp.status_code == 200
     result = json.loads(resp.get_body().decode())
-    
     assert result["id"] == task_id
     assert result["title"] == "Updated Task"
     assert result["description"] == "This task has been updated"
     assert result["status"] == "in-progress"
 
-# Test complete task
+# Stage 3 Tests: complete_task and delete_task
 def test_complete_task(populated_tasks):
     task_id = populated_tasks[0]["id"]
     
-    # Create a mock HTTP request
-    req = func.HttpRequest(
+    req = DummyHttpRequest(
         method='PATCH',
         url=f'/api/tasks/{task_id}/complete',
         body=None,
@@ -201,27 +199,19 @@ def test_complete_task(populated_tasks):
     )
     req.route_params = {"id": task_id}
     
-    # Call our function
     resp = complete_task(req)
     
-    # Check response
     assert resp.status_code == 200
-    
-    # Parse the returned JSON
     result = json.loads(resp.get_body().decode())
-    
-    # Verify the task was completed
     assert result["id"] == task_id
     assert result["status"] == "completed"
     assert result["completed_at"] is not None
 
-# Test delete task
 def test_delete_task(populated_tasks):
     task_id = populated_tasks[0]["id"]
     initial_count = len(populated_tasks)
     
-    # Create a mock HTTP request
-    req = func.HttpRequest(
+    req = DummyHttpRequest(
         method='DELETE',
         url=f'/api/tasks/{task_id}',
         body=None,
@@ -229,20 +219,45 @@ def test_delete_task(populated_tasks):
     )
     req.route_params = {"id": task_id}
     
-    # Call our function
     resp = delete_task(req)
     
-    # Check response
     assert resp.status_code == 200
-    
-    # Parse the returned JSON
     result = json.loads(resp.get_body().decode())
-    
-    # Verify the response contains the deleted task
     assert result["message"] == "Task deleted successfully"
     assert result["task"]["id"] == task_id
     
-    # Verify the task was actually removed
     import function_app
     assert len(function_app.tasks) == initial_count - 1
     assert not any(task["id"] == task_id for task in function_app.tasks)
+
+def test_task_completion_stats(populated_tasks):
+    req = DummyHttpRequest(
+        method='GET',
+        url='/api/analytics/completion',
+        body=None,
+        params={}
+    )
+    resp = task_completion_stats(req)
+    
+    assert resp.status_code == 200
+    result = json.loads(resp.get_body().decode())
+    assert result["total_tasks"] == 2
+    assert result["completed_tasks"] == 1
+    assert result["pending_tasks"] == 1
+    assert result["completion_percentage"] == 50.0
+
+def test_productivity_metrics(populated_tasks):
+    req = DummyHttpRequest(
+        method='GET',
+        url='/api/analytics/productivity',
+        body=None,
+        params={}
+    )
+    resp = productivity_metrics(req)
+    
+    assert resp.status_code == 200
+    result = json.loads(resp.get_body().decode())
+    assert result["tasks_created"] == 2
+    assert result["tasks_completed"] == 1
+    assert result["completion_rate"] == 50.0
+    assert "average_completion_time_hours" in result
