@@ -81,4 +81,85 @@ def get_tasks(req: func.HttpRequest) -> func.HttpResponse:
             mimetype="application/json"
         )
 
+# Get task by ID
+@app.route(route="tasks/{id}", methods=["GET"])
+def get_task_by_id(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info('Get Task by ID function processed a request.')
+    
+    # Get task ID from route
+    task_id = req.route_params.get('id')
+    logging.info(f'Looking for task ID: {task_id}')
+    
+    # Find task with matching ID
+    task = next((t for t in tasks if t['id'] == task_id), None)
+    
+    if task:
+        logging.info(f'Found task: "{task["title"]}"')
+        return func.HttpResponse(
+            json.dumps(task),
+            mimetype="application/json"
+        )
+    else:
+        logging.warning(f'Task with ID {task_id} not found')
+        return func.HttpResponse(
+            "Task not found",
+            status_code=404
+        )
+
+# Update task
+@app.route(route="tasks/{id}", methods=["PUT"])
+def update_task(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info('Update Task function processed a request.')
+    
+    # Get task ID from route
+    task_id = req.route_params.get('id')
+    logging.info(f'Updating task with ID: {task_id}')
+    
+    try:
+        # Get request body
+        req_body = req.get_json()
+        logging.info(f'Update data: {req_body}')
+        
+        # Find task with matching ID
+        task_index = next((i for i, t in enumerate(tasks) if t['id'] == task_id), None)
+        
+        if task_index is None:
+            logging.warning(f'Task with ID {task_id} not found for update')
+            return func.HttpResponse(
+                "Task not found",
+                status_code=404
+            )
+        
+        # Update task fields but preserve ID and creation date
+        current_task = tasks[task_index]
+        updated_task = {
+            "id": current_task["id"],
+            "title": req_body.get("title", current_task["title"]),
+            "description": req_body.get("description", current_task["description"]),
+            "status": req_body.get("status", current_task["status"]),
+            "created_at": current_task["created_at"],
+            "completed_at": current_task["completed_at"]
+        }
+        
+        # Replace task in list
+        tasks[task_index] = updated_task
+        logging.info(f'Successfully updated task: "{updated_task["title"]}"')
+        
+        return func.HttpResponse(
+            json.dumps(updated_task),
+            mimetype="application/json"
+        )
+        
+    except ValueError:
+        logging.error('Invalid request format')
+        return func.HttpResponse(
+            "Invalid request format. Please check your JSON syntax.",
+            status_code=400
+        )
+    except Exception as e:
+        logging.error(f"Unexpected error: {str(e)}")
+        return func.HttpResponse(
+            "An unexpected error occurred",
+            status_code=500
+        )
 
