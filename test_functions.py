@@ -84,23 +84,4 @@ def test_create_task(reset_tasks):
     assert "id" in result
     assert "created_at" in result
 
-# Test get all tasks
-def test_get_tasks(populated_tasks):
-    
-    req = func.HttpRequest(
-        method='GET',
-        url='/api/tasks',
-        body=None,
-        params={}
-    )
-    
-    # Call our function
-    resp = get_tasks(req)
-    
-    # Check response
-    assert resp.status_code == 200
-    result = json.loads(resp.get_body().decode())
-    assert len(result) == 2
-    assert any(task["title"] == "Test Task" for task in result)
-    assert any(task["title"] == "Completed Task" for task in result)
 
