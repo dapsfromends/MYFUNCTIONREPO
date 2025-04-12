@@ -201,6 +201,7 @@ def productivity_metrics(req: func.HttpRequest) -> func.HttpResponse:
         completion_rate = (count / len(tasks)) * 100 if tasks else 0
 
         metrics = {
+            "tasks_created": len(tasks),
             "average_completion_time_minutes": round(avg_completion, 2),
             "completion_rate": round(completion_rate, 2)
         }
