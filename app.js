@@ -1,78 +1,113 @@
-const API_BASE = "http://myfunctionappz.azurewebsites.net/api/tasks";
+const apiBaseUrl = "https://myfunctionappz.azurewebsites.net/api";
 
-document.addEventListener("DOMContentLoaded", () => {
-  fetchTasks();
-
-  document.getElementById("taskForm").addEventListener("submit", async (e) => {
+// Create task
+document.getElementById("create-task-form").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const title = document.getElementById("taskTitle").value;
-    const description = document.getElementById("taskDescription").value;
-    if (title.trim()) {
-      await createTask(title, description);
-      document.getElementById("taskForm").reset();
-      fetchTasks();
+    const title = document.getElementById("title").value.trim();
+    const description = document.getElementById("description").value.trim();
+
+    if (!title) return;
+
+    try {
+        const response = await fetch(`${apiBaseUrl}/tasks`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title, description })
+        });
+        if (response.ok) {
+            document.getElementById("title").value = "";
+            document.getElementById("description").value = "";
+            await fetchTasks();
+            await fetchAnalytics();
+        }
+    } catch (error) {
+        console.error("Error creating task:", error);
     }
-  });
 });
 
+// Fetch all tasks
 async function fetchTasks() {
-  try {
-    const res = await fetch(API_BASE);
-    const tasks = await res.json();
+    const filter = document.getElementById("filter-status").value;
+    let url = `${apiBaseUrl}/tasks`;
+    if (filter !== "all") {
+        url += `?status=${filter}`;
+    }
 
-    const taskList = document.getElementById("taskList");
-    taskList.innerHTML = "";
-
-    tasks.forEach(task => {
-      const li = document.createElement("li");
-      li.className = `task ${task.status}`;
-      li.innerHTML = `
-        <h3>${task.title}</h3>
-        <p>${task.description}</p>
-        <p>Status: ${task.status}</p>
-        <div class="task-buttons">
-          ${task.status !== "completed" ? `<button onclick="completeTask('${task.id}')">Complete</button>` : ""}
-          <button onclick="deleteTask('${task.id}')">Delete</button>
-        </div>
-      `;
-      taskList.appendChild(li);
-    });
-  } catch (err) {
-    console.error("Error fetching tasks:", err);
-  }
+    try {
+        const response = await fetch(url);
+        const tasks = await response.json();
+        renderTasks(tasks);
+    } catch (error) {
+        console.error("Error fetching tasks:", error);
+    }
 }
 
-async function createTask(title, description) {
-  try {
-    const res = await fetch(API_BASE, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description })
+// Render tasks
+function renderTasks(tasks) {
+    const container = document.getElementById("task-list");
+    container.innerHTML = "";
+    tasks.forEach((task) => {
+        const div = document.createElement("div");
+        div.className = "task-item";
+        div.innerHTML = `
+            <h4>${task.title}</h4>
+            <p>${task.description}</p>
+            <p>Status: ${task.status}</p>
+            <button onclick="completeTask('${task.id}')">Complete</button>
+            <button onclick="deleteTask('${task.id}')">Delete</button>
+        `;
+        container.appendChild(div);
     });
-    return await res.json();
-  } catch (err) {
-    console.error("Error creating task:", err);
-  }
 }
 
+// Complete a task
 async function completeTask(id) {
-  try {
-    await fetch(`${API_BASE}/${id}/complete`, {
-      method: "PATCH"
-    });
-    fetchTasks();
-  } catch (err) {
-    console.error("Error completing task:", err);
-  }
+    try {
+        const response = await fetch(`${apiBaseUrl}/tasks/${id}/complete`, {
+            method: "PATCH"
+        });
+        if (response.ok) {
+            await fetchTasks();
+            await fetchAnalytics();
+        }
+    } catch (error) {
+        console.error("Error completing task:", error);
+    }
 }
 
+// Delete a task
 async function deleteTask(id) {
-  try {
-    await fetch(`${API_BASE}/${id}`, {
-      method: "DELETE"
-    });
-    fetchTasks();
-  } catch (err) {
-    console.error("Error deleting task:", err);
-  }
+    try {
+        const response = await fetch(`${apiBaseUrl}/tasks/${id}`, {
+            method: "DELETE"
+        });
+        if (response.ok) {
+            await fetchTasks();
+            await fetchAnalytics();
+        }
+    } catch (error) {
+        console.error("Error deleting task:", error);
+    }
 }
+
+// Filter by status
+document.getElementById("filter-status").addEventListener("change", fetchTasks);
+
+// Fetch analytics
+async function fetchAnalytics() {
+    try {
+        const response = await fetch(`${apiBaseUrl}/analytics/productivity`);
+        const data = await response.json();
+        document.getElementById("completion-rate").textContent = data.completion_rate + "%";
+        document.getElementById("avg-time").textContent = data.average_completion_time_minutes + " mins";
+        document.getElementById("created-count").textContent = data.tasks_created;
+        document.getElementById("completed-count").textContent = data.tasks_completed;
+    } catch (error) {
+        console.error("Error fetching analytics:", error);
+    }
+}
+
+window.onload = () => {
+    fetchTasks();
+    fetchAnalytics();
+};
