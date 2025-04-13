@@ -240,7 +240,8 @@ def productivity_metrics(req: func.HttpRequest) -> func.HttpResponse:
             "tasks_created": tasks_created,
             "tasks_completed": tasks_completed,
             "completion_rate": round(completion_rate, 2),
-            "tasks_completed_today": completed_today
+            "tasks_completed_today": completed_today,
+            "average_completion_time_hours": avg_completion_time_hours
         }
 
         logging.info(f"Productivity metrics calculated: {result}")
