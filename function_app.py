@@ -221,22 +221,30 @@ def task_completion_stats(req: func.HttpRequest) -> func.HttpResponse:
         logging.error(f"Error in task_completion_stats: {str(e)}")
         return func.HttpResponse("Internal server error", status_code=500)
 
-# Productivity metrics
 @app.route(route="analytics/productivity", methods=["GET"])
 def productivity_metrics(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("productivity_metrics function triggered.")
 
     try:
         today = datetime.now().date()
+        tasks_created = len(tasks)
+        tasks_completed = len([t for t in tasks if t["status"] == "completed"])
         completed_today = len([
             t for t in tasks if t["status"] == "completed" and
-            datetime.fromisoformat(t["completed_at"]).date() == today
+            t.get("completed_at") and datetime.fromisoformat(t["completed_at"]).date() == today
         ])
-        logging.info(f"Tasks completed today: {completed_today}")
-        return func.HttpResponse(
-            json.dumps({"tasks_completed_today": completed_today}),
-            mimetype="application/json"
-        )
+
+        completion_rate = (tasks_completed / tasks_created) * 100 if tasks_created else 0
+
+        result = {
+            "tasks_created": tasks_created,
+            "tasks_completed": tasks_completed,
+            "completion_rate": round(completion_rate, 2),
+            "tasks_completed_today": completed_today
+        }
+
+        logging.info(f"Productivity metrics calculated: {result}")
+        return func.HttpResponse(json.dumps(result), mimetype="application/json")
 
     except Exception as e:
         logging.error(f"Error calculating productivity metrics: {str(e)}")
