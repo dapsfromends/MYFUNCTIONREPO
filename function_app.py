@@ -1,13 +1,28 @@
 import logging
 import azure.functions as func
+from azure.data.tables import TableServiceClient, TableEntity
 from datetime import datetime
 import json
 import uuid
+import os
 
 app = func.FunctionApp()
 
-# In-memory task list (to be replaced with Azure Table Storage)
-tasks = []
+# Table Storage setup
+connection_string = os.environ.get("AzureWebJobsStorage")
+table_name = os.environ.get("TABLE_NAME", "TasksTable")
+table_service = TableServiceClient.from_connection_string(conn_str=connection_string)
+task_table = table_service.get_table_client(table_name)
+
+def to_task_dict(entity):
+    return {
+        "id": entity["RowKey"],
+        "title": entity.get("title", ""),
+        "description": entity.get("description", ""),
+        "status": entity.get("status", "pending"),
+        "created_at": entity.get("created_at"),
+        "completed_at": entity.get("completed_at")
+    }
 
 @app.route(route="tasks", methods=["POST"], auth_level=func.AuthLevel.ANONYMOUS)
 def create_task(req: func.HttpRequest) -> func.HttpResponse:
@@ -17,18 +32,20 @@ def create_task(req: func.HttpRequest) -> func.HttpResponse:
         req_body = req.get_json()
         logging.info(f"Received payload: {req_body}")
 
-        new_task = {
-            "id": str(uuid.uuid4()),
+        task_id = str(uuid.uuid4())
+        entity = {
+            "PartitionKey": "tasks",
+            "RowKey": task_id,
             "title": req_body.get("title"),
             "description": req_body.get("description", ""),
             "status": "pending",
-            "created_at": datetime.now().isoformat(),
+            "created_at": datetime.utcnow().isoformat(),
             "completed_at": None
         }
 
-        tasks.append(new_task)
-        logging.info(f"Task created successfully: {new_task}")
-        return func.HttpResponse(json.dumps(new_task), status_code=201)
+        task_table.create_entity(entity)
+        logging.info(f"Task stored in Table Storage: {task_id}")
+        return func.HttpResponse(json.dumps(to_task_dict(entity)), status_code=201)
 
     except Exception as e:
         logging.error(f"Exception in create_task: {str(e)}")
@@ -40,14 +57,12 @@ def get_tasks(req: func.HttpRequest) -> func.HttpResponse:
 
     try:
         status_filter = req.params.get("status")
-        logging.info(f"Status filter: {status_filter}")
+        entities = task_table.query_entities("PartitionKey eq 'tasks'")
+        tasks = [to_task_dict(e) for e in entities]
 
         if status_filter:
-            filtered_tasks = [task for task in tasks if task["status"] == status_filter]
-            logging.info(f"Found {len(filtered_tasks)} tasks with status '{status_filter}'")
-            return func.HttpResponse(json.dumps(filtered_tasks), status_code=200)
+            tasks = [t for t in tasks if t["status"] == status_filter]
 
-        logging.info(f"Returning all {len(tasks)} tasks")
         return func.HttpResponse(json.dumps(tasks), status_code=200)
 
     except Exception as e:
@@ -60,20 +75,12 @@ def get_task_by_id(req: func.HttpRequest) -> func.HttpResponse:
 
     try:
         task_id = req.route_params.get("id")
-        logging.info(f"Looking for task ID: {task_id}")
-
-        task = next((t for t in tasks if t["id"] == task_id), None)
-
-        if task:
-            logging.info(f"Task found: {task_id}")
-            return func.HttpResponse(json.dumps(task), status_code=200)
-        else:
-            logging.warning(f"Task not found: {task_id}")
-            return func.HttpResponse("Task not found", status_code=404)
+        entity = task_table.get_entity(partition_key="tasks", row_key=task_id)
+        return func.HttpResponse(json.dumps(to_task_dict(entity)), status_code=200)
 
     except Exception as e:
-        logging.error(f"Exception in get_task_by_id: {str(e)}")
-        return func.HttpResponse("Internal server error", status_code=500)
+        logging.warning(f"Task not found: {task_id}")
+        return func.HttpResponse("Task not found", status_code=404)
 
 @app.route(route="tasks/{id}", methods=["PUT"], auth_level=func.AuthLevel.ANONYMOUS)
 def update_task(req: func.HttpRequest) -> func.HttpResponse:
@@ -82,21 +89,14 @@ def update_task(req: func.HttpRequest) -> func.HttpResponse:
     try:
         task_id = req.route_params.get("id")
         req_body = req.get_json()
-        logging.info(f"Updating task ID: {task_id} with data: {req_body}")
+        entity = task_table.get_entity(partition_key="tasks", row_key=task_id)
 
-        task = next((t for t in tasks if t["id"] == task_id), None)
+        entity["title"] = req_body.get("title", entity["title"])
+        entity["description"] = req_body.get("description", entity["description"])
+        entity["status"] = req_body.get("status", entity["status"])
 
-        if task:
-            task.update({
-                "title": req_body.get("title", task["title"]),
-                "description": req_body.get("description", task["description"]),
-                "status": req_body.get("status", task["status"])
-            })
-            logging.info(f"Task updated: {task}")
-            return func.HttpResponse(json.dumps(task), status_code=200)
-
-        logging.warning(f"Task not found for update: {task_id}")
-        return func.HttpResponse("Task not found", status_code=404)
+        task_table.update_entity(entity, mode="MERGE")
+        return func.HttpResponse(json.dumps(to_task_dict(entity)), status_code=200)
 
     except Exception as e:
         logging.error(f"Exception in update_task: {str(e)}")
@@ -108,16 +108,13 @@ def complete_task(req: func.HttpRequest) -> func.HttpResponse:
 
     try:
         task_id = req.route_params.get("id")
-        task = next((t for t in tasks if t["id"] == task_id), None)
+        entity = task_table.get_entity(partition_key="tasks", row_key=task_id)
 
-        if task:
-            task["status"] = "completed"
-            task["completed_at"] = datetime.now().isoformat()
-            logging.info(f"Task marked complete: {task}")
-            return func.HttpResponse(json.dumps(task), status_code=200)
+        entity["status"] = "completed"
+        entity["completed_at"] = datetime.utcnow().isoformat()
+        task_table.update_entity(entity, mode="MERGE")
 
-        logging.warning(f"Task not found for completion: {task_id}")
-        return func.HttpResponse("Task not found", status_code=404)
+        return func.HttpResponse(json.dumps(to_task_dict(entity)), status_code=200)
 
     except Exception as e:
         logging.error(f"Exception in complete_task: {str(e)}")
@@ -129,20 +126,11 @@ def delete_task(req: func.HttpRequest) -> func.HttpResponse:
 
     try:
         task_id = req.route_params.get("id")
-        logging.info(f"Deleting task with ID: {task_id}")
-
-        global tasks
-        for i, task in enumerate(tasks):
-            if task["id"] == task_id:
-                deleted_task = tasks.pop(i)
-                logging.info(f"Task deleted: {deleted_task}")
-                return func.HttpResponse(json.dumps({
-                    "message": "Task deleted successfully",
-                    "task": deleted_task
-                }), status_code=200)
-
-        logging.warning(f"Task not found for deletion: {task_id}")
-        return func.HttpResponse("Task not found", status_code=404)
+        task_table.delete_entity(partition_key="tasks", row_key=task_id)
+        return func.HttpResponse(json.dumps({
+            "message": "Task deleted successfully",
+            "task_id": task_id
+        }), status_code=200)
 
     except Exception as e:
         logging.error(f"Exception in delete_task: {str(e)}")
@@ -153,6 +141,9 @@ def task_completion_stats(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("task_completion_stats function triggered")
 
     try:
+        entities = task_table.query_entities("PartitionKey eq 'tasks'")
+        tasks = [to_task_dict(e) for e in entities]
+
         total_tasks = len(tasks)
         completed = sum(1 for t in tasks if t["status"] == "completed")
         pending = total_tasks - completed
@@ -165,7 +156,6 @@ def task_completion_stats(req: func.HttpRequest) -> func.HttpResponse:
             "completion_percentage": round(percentage, 2)
         }
 
-        logging.info(f"Task stats calculated: {stats}")
         return func.HttpResponse(json.dumps(stats), status_code=200)
 
     except Exception as e:
@@ -177,8 +167,9 @@ def productivity_metrics(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("productivity_metrics function triggered")
 
     try:
+        entities = task_table.query_entities("PartitionKey eq 'tasks'")
+        tasks = [to_task_dict(e) for e in entities]
         completed_tasks = [t for t in tasks if t["status"] == "completed"]
-        logging.info(f"{len(completed_tasks)} completed tasks found")
 
         if not completed_tasks:
             return func.HttpResponse(json.dumps({
@@ -208,7 +199,6 @@ def productivity_metrics(req: func.HttpRequest) -> func.HttpResponse:
             "completion_rate": round(completion_rate, 2)
         }
 
-        logging.info(f"Productivity metrics: {metrics}")
         return func.HttpResponse(json.dumps(metrics), status_code=200)
 
     except Exception as e:
