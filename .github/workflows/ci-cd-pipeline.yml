@@ -1,78 +1,35 @@
-name: CI/CD PIPELINE FOR MYFUNCTIONAPP
+name: Build and Deploy Python Azure Function App to Azure
+
 on:
   push:
-    branches: [ main ]
-    paths-ignore:
-      - '**.md'
-      - '.gitignore'
-  pull_request:
-    branches: [ main ]
-  schedule:
-    - cron: '0 0 * * 1'  # Weekly run on Mondays
-
-env:
-  AZURE_FUNCTIONAPP_NAME: 'myfunctionappz'
-  PYTHON_VERSION: '3.11'
-  WORKING_DIR: '.'
+    branches:
+      - main
 
 jobs:
-  quality-check:
-    name: Test & Verify
+  build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
-    - name: Get code
-      uses: actions/checkout@v3
-      
-    - name: Configure Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v4
+    - uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        cache: pip
-        
-    - name: Setup dependencies
-      run: |
-        python -m pip install --upgrade pip wheel
-        pip install pytest pytest-asyncio
-        pip install -r requirements.txt
-        
-    - name: Run test suite
-      run: |
-        echo "Running tests for TaskHub API..."
-        pytest -v
-        
-  deploy-function:
-    name: Deploy to Azure
-    needs: quality-check
-    if: github.event_name == 'push' || github.event_name == 'schedule'
-    runs-on: ubuntu-latest
-    steps:
-    - name: Get code
-      uses: actions/checkout@v3
-      
-    - name: Configure Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        
-    - name: Bundle dependencies
+        python-version: '3.11'
+
+    - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt --target=".python_packages/lib/site-packages"
-        
-    - name: Authenticate with Azure
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-        
-    - name: Deploy Function App
+        pip install -r requirements.txt
+
+    - name: Run tests
+      run: |
+        echo "Running tests for TaskHub API..."
+        pytest
+
+    - name: Deploy to Azure Functions
       uses: Azure/functions-action@v1
       with:
-        app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
-        package: ${{ env.WORKING_DIR }}
-        scm-do-build-during-deployment: true
-        enable-oryx-build: true
-        
-    - name: Log deployment status
-      run: |
-        echo "Deployment completed at $(date)"
-        echo "Function App URL: https://${{ env.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net"
+        app-name: 'myfunctionappz'
+        package: '.'
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
