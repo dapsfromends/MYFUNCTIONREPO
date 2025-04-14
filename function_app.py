@@ -8,6 +8,8 @@ import azure.functions as func
 from azure.data.tables import TableServiceClient, TableEntity
 from azure.core.exceptions import ResourceNotFoundError
 
+app = func.FunctionApp() 
+
 TABLE_NAME = "TasksTable"
 
 def get_table_client():
