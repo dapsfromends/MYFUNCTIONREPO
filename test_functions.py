@@ -14,7 +14,7 @@ from function_app import (
 )
 
 TABLE_NAME = "TasksTable"
-connection_string = os.getenv("AZURE_TABLES_CONNECTION_STRING")
+connection_string = os.getenv("AZURE_TABLES_CONNECTION_STRING", "UseDevelopmentStorage=true")
 table_service = TableServiceClient.from_connection_string(conn_str=connection_string)
 table_client = table_service.get_table_client(table_name=TABLE_NAME)
 
