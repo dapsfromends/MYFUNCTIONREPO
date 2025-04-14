@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timedelta
 
 import azure.functions as func
-from azure.data.tables import TableServiceClient, TableEntity
+from azure.data.tables import TableServiceClient, TableEntity, UpdateMode
 from azure.core.exceptions import ResourceNotFoundError
 
 app = func.FunctionApp() 
@@ -106,7 +106,7 @@ def update_task(req: func.HttpRequest) -> func.HttpResponse:
         task["title"] = data.get("title", task["title"])
         task["description"] = data.get("description", task["description"])
         task["status"] = data.get("status", task["status"])
-        table.update_entity(mode="MERGE", entity=task)
+        table.update_entity(mode=UpdateMode.MERGE, entity=task)
 
         task["id"] = task.pop("RowKey")
         return func.HttpResponse(json.dumps(task), status_code=200, mimetype="application/json")
@@ -126,7 +126,7 @@ def complete_task(req: func.HttpRequest) -> func.HttpResponse:
         task = table.get_entity("task", task_id)
         task["status"] = "completed"
         task["completed_at"] = datetime.utcnow().isoformat()
-        table.update_entity(mode="MERGE", entity=task)
+        table.update_entity(mode=UpdateMode.MERGE, entity=task)
 
         task["id"] = task.pop("RowKey")
         return func.HttpResponse(json.dumps(task), status_code=200, mimetype="application/json")
