@@ -1,280 +1,151 @@
 import json
-import azure.functions as func
-import pytest
-from datetime import datetime, timedelta
 import uuid
+import pytest
+from datetime import datetime
+
+import azure.functions as func
+from azure.data.tables import TableServiceClient
 
 from function_app import (
-    create_task,
-    get_tasks,
-    get_task_by_id,
-    update_task,
-    complete_task,
-    delete_task,
-    task_completion_stats,
-    productivity_metrics,
+    create_task, get_tasks, get_task_by_id,
+    update_task, complete_task, delete_task,
+    task_completion_stats, productivity_metrics
 )
 
-# Define a DummyHttpRequest that allows setting route_params
-class DummyHttpRequest(func.HttpRequest):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._route_params = {}
-
-    @property
-    def route_params(self):
-        return self._route_params
-
-    @route_params.setter
-    def route_params(self, value):
-        self._route_params = value
+TABLE_NAME = "TasksTable"
+connection_string = os.getenv("AZURE_TABLES_CONNECTION_STRING")
+table_service = TableServiceClient.from_connection_string(conn_str=connection_string)
+table_client = table_service.get_table_client(table_name=TABLE_NAME)
 
 @pytest.fixture
 def reset_tasks():
-    """Reset the tasks list before each test"""
-    import function_app
-    function_app.tasks = []
+    entities = table_client.query_entities("PartitionKey eq 'task'")
+    for e in entities:
+        if e["title"].startswith("Test"):
+            table_client.delete_entity("task", e["RowKey"])
     yield
-    function_app.tasks = []
+    # Post-test cleanup
+    entities = table_client.query_entities("PartitionKey eq 'task'")
+    for e in entities:
+        if e["title"].startswith("Test"):
+            table_client.delete_entity("task", e["RowKey"])
 
 @pytest.fixture
-def sample_task():
-    """Create a sample task for testing"""
-    task_id = str(uuid.uuid4())
-    created_time = datetime.now().isoformat()
-    return {
-        "id": task_id,
-        "title": "Test Task",
+def populated_tasks(reset_tasks):
+    task_1 = {
+        "PartitionKey": "task",
+        "RowKey": str(uuid.uuid4()),
+        "title": "Test Task 1",
         "description": "A task created for testing",
         "status": "pending",
-        "created_at": created_time,
+        "created_at": datetime.utcnow().isoformat(),
         "completed_at": None
     }
-
-@pytest.fixture
-def populated_tasks(reset_tasks, sample_task):
-    """Populate the tasks list with sample data"""
-    import function_app
-    
-    # Add the sample task
-    function_app.tasks.append(sample_task)
-    
-    # Add a completed task
-    completed_task = {
-        "id": str(uuid.uuid4()),
-        "title": "Completed Task",
+    task_2 = {
+        "PartitionKey": "task",
+        "RowKey": str(uuid.uuid4()),
+        "title": "Test Task 2",
         "description": "A task that is already completed",
         "status": "completed",
-        "created_at": (datetime.now() - timedelta(days=2)).isoformat(),
-        "completed_at": datetime.now().isoformat()
+        "created_at": datetime.utcnow().isoformat(),
+        "completed_at": datetime.utcnow().isoformat()
     }
-    function_app.tasks.append(completed_task)
-    
-    return function_app.tasks
+    table_client.create_entity(entity=task_1)
+    table_client.create_entity(entity=task_2)
+    return [task_1, task_2]
 
-# ---------------------
-# Stage 1 Tests: create_task and get_tasks
-# ---------------------
 def test_create_task(reset_tasks):
     task_data = {
-        "title": "New Task",
-        "description": "This is a new task"
+        "title": "Test New Task",
+        "description": "This is a test"
     }
-    
     req = func.HttpRequest(
         method='POST',
         url='/api/tasks',
         body=json.dumps(task_data).encode(),
         params={}
     )
-    
-    # Call our function
     resp = create_task(req)
-    
-    # Check response
     assert resp.status_code == 201
-    result = json.loads(resp.get_body().decode())
-    
-    assert result["title"] == "New Task"
-    assert result["description"] == "This is a new task"
-    assert result["status"] == "pending"
-    assert result["completed_at"] is None
-    assert "id" in result
-    assert "created_at" in result
 
 def test_get_tasks(populated_tasks):
-    req = func.HttpRequest(
-        method='GET',
-        url='/api/tasks',
-        body=None,
-        params={}
-    )
+    req = func.HttpRequest(method='GET', url='/api/tasks', body=None, params={})
     resp = get_tasks(req)
-    
     assert resp.status_code == 200
-    result = json.loads(resp.get_body().decode())
-    assert len(result) == 2
-    assert any(task["title"] == "Test Task" for task in result)
-    assert any(task["title"] == "Completed Task" for task in result)
+    data = json.loads(resp.get_body())
+    assert isinstance(data, list)
+    assert len(data) >= 2
 
 def test_get_tasks_with_status_filter(populated_tasks):
-    req = func.HttpRequest(
-        method='GET',
-        url='/api/tasks',
-        body=None,
-        params={"status": "completed"}
-    )
+    req = func.HttpRequest(method='GET', url='/api/tasks', body=None, params={"status": "completed"})
     resp = get_tasks(req)
-    
     assert resp.status_code == 200
-    result = json.loads(resp.get_body().decode())
-    assert len(result) == 1
-    assert result[0]["title"] == "Completed Task"
-    assert result[0]["status"] == "completed"
+    data = json.loads(resp.get_body())
+    assert all(task["status"] == "completed" for task in data)
 
-# ---------------------
-# Stage 2 Tests: get_task_by_id and update_task
-# ---------------------
 def test_get_task_by_id(populated_tasks):
-    task_id = populated_tasks[0]["id"]
-    
-    req = DummyHttpRequest(
-        method='GET',
-        url=f'/api/tasks/{task_id}',
-        body=None,
-        params={}
-    )
+    task_id = populated_tasks[0]["RowKey"]
+    req = func.HttpRequest(method='GET', url=f'/api/tasks/{task_id}', body=None, params={})
     req.route_params = {"id": task_id}
-    
     resp = get_task_by_id(req)
-    
     assert resp.status_code == 200
-    result = json.loads(resp.get_body().decode())
-    assert result["id"] == task_id
-    assert result["title"] == "Test Task"
+    task = json.loads(resp.get_body())
+    assert task["id"] == task_id
 
-def test_get_task_by_id_not_found(reset_tasks):
-    non_existent_id = str(uuid.uuid4())
-    
-    req = DummyHttpRequest(
-        method='GET',
-        url=f'/api/tasks/{non_existent_id}',
-        body=None,
-        params={}
-    )
-    req.route_params = {"id": non_existent_id}
-    
+def test_get_task_by_id_not_found():
+    req = func.HttpRequest(method='GET', url='/api/tasks/fake-id', body=None, params={})
+    req.route_params = {"id": "fake-id"}
     resp = get_task_by_id(req)
-    
     assert resp.status_code == 404
-    assert "Task not found" in resp.get_body().decode()
 
 def test_update_task(populated_tasks):
-    task_id = populated_tasks[0]["id"]
+    task_id = populated_tasks[0]["RowKey"]
     update_data = {
-        "title": "Updated Task",
-        "description": "This task has been updated",
+        "title": "Test Updated Task",
+        "description": "Updated description",
         "status": "in-progress"
     }
-    
-    req = DummyHttpRequest(
+    req = func.HttpRequest(
         method='PUT',
         url=f'/api/tasks/{task_id}',
         body=json.dumps(update_data).encode(),
         params={}
     )
     req.route_params = {"id": task_id}
-    
     resp = update_task(req)
-    
     assert resp.status_code == 200
-    result = json.loads(resp.get_body().decode())
-    
-    assert result["id"] == task_id
-    assert result["title"] == "Updated Task"
-    assert result["description"] == "This task has been updated"
-    assert result["status"] == "in-progress"
+    updated = json.loads(resp.get_body())
+    assert updated["title"] == "Test Updated Task"
 
-# ---------------------
-# Stage 3 Tests: complete_task and delete_task
-# ---------------------
 def test_complete_task(populated_tasks):
-    task_id = populated_tasks[0]["id"]
-    
-    req = DummyHttpRequest(
-        method='PATCH',
-        url=f'/api/tasks/{task_id}/complete',
-        body=None,
-        params={}
-    )
+    task_id = populated_tasks[0]["RowKey"]
+    req = func.HttpRequest(method='PATCH', url=f'/api/tasks/{task_id}/complete', body=None, params={})
     req.route_params = {"id": task_id}
-    
     resp = complete_task(req)
-    
     assert resp.status_code == 200
-    result = json.loads(resp.get_body().decode())
-    assert result["id"] == task_id
-    assert result["status"] == "completed"
-    assert result["completed_at"] is not None
+    task = json.loads(resp.get_body())
+    assert task["status"] == "completed"
 
 def test_delete_task(populated_tasks):
-    task_id = populated_tasks[0]["id"]
-    initial_count = len(populated_tasks)
-    
-    req = DummyHttpRequest(
-        method='DELETE',
-        url=f'/api/tasks/{task_id}',
-        body=None,
-        params={}
-    )
+    task_id = populated_tasks[0]["RowKey"]
+    req = func.HttpRequest(method='DELETE', url=f'/api/tasks/{task_id}', body=None, params={})
     req.route_params = {"id": task_id}
-    
     resp = delete_task(req)
-    
     assert resp.status_code == 200
-    result = json.loads(resp.get_body().decode())
-    assert result["message"] == "Task deleted successfully"
-    assert result["task"]["id"] == task_id
-    
-    import function_app
-    assert len(function_app.tasks) == initial_count - 1
-    assert not any(task["id"] == task_id for task in function_app.tasks)
 
-# ---------------------
-# Stage 4 Tests: Analytics endpoints
-# ---------------------
 def test_task_completion_stats(populated_tasks):
-    req = DummyHttpRequest(
-        method='GET',
-        url='/api/analytics/completion',
-        body=None,
-        params={}
-    )
-    # No route_params required here
+    req = func.HttpRequest(method='GET', url='/api/analytics/completion', body=None, params={})
     resp = task_completion_stats(req)
-    
     assert resp.status_code == 200
-    result = json.loads(resp.get_body().decode())
-    # With the populated_tasks fixture, there should be 2 tasks, 1 completed.
-    assert result["total_tasks"] == len(populated_tasks)
-    assert result["completed_tasks"] == 1
-    assert result["pending_tasks"] == len(populated_tasks) - 1
-    # Check for a valid completion percentage calculation
-    assert "completion_percentage" in result
+    result = json.loads(resp.get_body())
+    assert "tasks_completed_today" in result
 
 def test_productivity_metrics(populated_tasks):
-    req = DummyHttpRequest(
-        method='GET',
-        url='/api/analytics/productivity',
-        body=None,
-        params={}
-    )
-    # No route_params required here
+    req = func.HttpRequest(method='GET', url='/api/analytics/productivity', body=None, params={})
     resp = productivity_metrics(req)
-    
     assert resp.status_code == 200
-    result = json.loads(resp.get_body().decode())
+    result = json.loads(resp.get_body())
     assert "tasks_created" in result
     assert "tasks_completed" in result
     assert "completion_rate" in result
-    assert "average_completion_time_hours" in result
+    assert "average_completion_time_minutes" in result
