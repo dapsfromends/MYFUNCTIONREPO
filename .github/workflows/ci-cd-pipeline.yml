@@ -39,6 +39,8 @@ jobs:
       run: |
         echo "Running tests for TaskHub API..."
         pytest -v
+      env:
+        AZURE_TABLES_CONNECTION_STRING: ${{ secrets.AZURE_TABLES_CONNECTION_STRING }}  
         
   deploy-function:
     name: Deploy to Azure
