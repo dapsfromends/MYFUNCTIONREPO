@@ -3,6 +3,7 @@ import os
 import uuid
 import pytest
 from datetime import datetime
+from tests.helpers import DummyHttpRequest
 
 from azure.data.tables import TableServiceClient
 import os
@@ -99,13 +100,13 @@ def test_get_tasks_with_status_filter(populated_tasks):
     assert all(task["status"] == "completed" for task in data)
 
 def test_get_task_by_id(populated_tasks):
-    task_id = populated_tasks[0]["RowKey"]
-    req = func.HttpRequest(method='GET', url=f'/api/tasks/{task_id}', body=None, params={})
-    req.route_params = {"id": task_id}
-    resp = get_task_by_id(req)
-    assert resp.status_code == 200
-    task = json.loads(resp.get_body())
-    assert task["id"] == task_id
+   task_id = populated_tasks[0]["RowKey"]
+   req = DummyHttpRequest(method='GET', url=f'/api/tasks/{task_id}', body=None, params={})
+   req.route_params = {"id": task_id}
+   resp = get_task_by_id(req)
+   assert resp.status_code == 200
+   task = json.loads(resp.get_body())
+   assert task["id"] == task_id
 
 from tests.helpers import DummyHttpRequest  
 
@@ -127,7 +128,7 @@ def test_update_task(populated_tasks):
         "description": "Updated description",
         "status": "in-progress"
     }
-    req = func.HttpRequest(
+    req = DummyHttpRequest(
         method='PUT',
         url=f'/api/tasks/{task_id}',
         body=json.dumps(update_data).encode(),
@@ -141,7 +142,7 @@ def test_update_task(populated_tasks):
 
 def test_complete_task(populated_tasks):
     task_id = populated_tasks[0]["RowKey"]
-    req = func.HttpRequest(method='PATCH', url=f'/api/tasks/{task_id}/complete', body=None, params={})
+    req = DummyHttpRequest(method='PATCH', url=f'/api/tasks/{task_id}/complete', body=None, params={})
     req.route_params = {"id": task_id}
     resp = complete_task(req)
     assert resp.status_code == 200
@@ -150,11 +151,11 @@ def test_complete_task(populated_tasks):
 
 def test_delete_task(populated_tasks):
     task_id = populated_tasks[0]["RowKey"]
-    req = func.HttpRequest(method='DELETE', url=f'/api/tasks/{task_id}', body=None, params={})
+    req = DummyHttpRequest(method='DELETE', url=f'/api/tasks/{task_id}', body=None, params={})
     req.route_params = {"id": task_id}
     resp = delete_task(req)
     assert resp.status_code == 200
-
+    
 def test_task_completion_stats(populated_tasks):
     req = func.HttpRequest(method='GET', url='/api/analytics/completion', body=None, params={})
     resp = task_completion_stats(req)
