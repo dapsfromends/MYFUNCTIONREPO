@@ -4,6 +4,14 @@ import uuid
 import pytest
 from datetime import datetime
 
+from azure.data.tables import TableServiceClient
+import os
+
+# Setup the table client once for reuse in the fixture
+connection_string = os.getenv("AZURE_TABLES_CONNECTION_STRING")
+table_service = TableServiceClient.from_connection_string(conn_str=connection_string)
+table_client = table_service.get_table_client("TasksTable")
+
 import azure.functions as func
 from azure.data.tables import TableServiceClient
 
