@@ -12,13 +12,16 @@ app = func.FunctionApp()
 
 TABLE_NAME = "TasksTable"
 
+from azure.core.exceptions import ResourceExistsError
+
 def get_table_client():
     connection_string = os.getenv("AZURE_TABLES_CONNECTION_STRING")
-    if not connection_string:
-        raise ValueError("AZURE_TABLES_CONNECTION_STRING is not set.")
     service = TableServiceClient.from_connection_string(conn_str=connection_string)
-    table = service.get_table_client(TABLE_NAME)
-    return table
+    try:
+        service.create_table_if_not_exists("TasksTable")
+    except ResourceExistsError:
+        pass
+    return service.get_table_client("TasksTable")
 
 @app.function_name(name="create_task")
 @app.route(route="tasks", methods=["POST"])

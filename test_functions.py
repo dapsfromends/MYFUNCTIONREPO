@@ -13,10 +13,16 @@ from function_app import (
     task_completion_stats, productivity_metrics
 )
 
-TABLE_NAME = "TasksTable"
-connection_string = os.getenv("AZURE_TABLES_CONNECTION_STRING", "UseDevelopmentStorage=true")
-table_service = TableServiceClient.from_connection_string(conn_str=connection_string)
-table_client = table_service.get_table_client(table_name=TABLE_NAME)
+from azure.core.exceptions import ResourceExistsError
+
+def get_table_client():
+    connection_string = os.getenv("AZURE_TABLES_CONNECTION_STRING")
+    service = TableServiceClient.from_connection_string(conn_str=connection_string)
+    try:
+        service.create_table_if_not_exists("TasksTable")
+    except ResourceExistsError:
+        pass
+    return service.get_table_client("TasksTable")
 
 @pytest.fixture
 def reset_tasks():
@@ -93,9 +99,16 @@ def test_get_task_by_id(populated_tasks):
     task = json.loads(resp.get_body())
     assert task["id"] == task_id
 
+from tests.helpers import DummyHttpRequest  # ✅ Make sure this import is at the top
+
 def test_get_task_by_id_not_found():
-    req = func.HttpRequest(method='GET', url='/api/tasks/fake-id', body=None, params={})
-    req.route_params = {"id": "fake-id"}
+    req = DummyHttpRequest(
+        method='GET',
+        url='/api/tasks/fake-id',
+        body=None,
+        params={}
+    )
+    req.route_params = {"id": "fake-id"}  # ✅ This only works with DummyHttpRequest
     resp = get_task_by_id(req)
     assert resp.status_code == 404
 
