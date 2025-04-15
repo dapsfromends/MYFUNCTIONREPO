@@ -1,4 +1,4 @@
-const API_BASE_URL = '/api/tasks';
+const API_BASE_URL = 'https://myfunctionappz.azurewebsites.net/api/tasks';
 
 async function fetchTasks() {
   try {
