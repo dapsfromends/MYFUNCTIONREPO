@@ -24,7 +24,7 @@ def get_table_client():
     return service.get_table_client("TasksTable")
 
 @app.function_name(name="create_task")
-@app.route(route="tasks", methods=["POST"])
+@app.route(route="tasks", methods=["POST"], auth_level=func.AuthLevel.ANONYMOUS)
 def create_task(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("create_task function triggered")
     try:
@@ -57,7 +57,7 @@ def create_task(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse("Internal Server Error", status_code=500)
 
 @app.function_name(name="get_tasks")
-@app.route(route="tasks", methods=["GET"])
+@app.route(route="tasks", methods=["GET"], auth_level=func.AuthLevel.ANONYMOUS)
 def get_tasks(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("get_tasks function triggered")
     try:
@@ -78,7 +78,7 @@ def get_tasks(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse("Internal Server Error", status_code=500)
 
 @app.function_name(name="get_task_by_id")
-@app.route(route="tasks/{id}", methods=["GET"])
+@app.route(route="tasks/{id}", methods=["GET"], auth_level=func.AuthLevel.ANONYMOUS)
 def get_task_by_id(req: func.HttpRequest) -> func.HttpResponse:
     task_id = req.route_params.get("id")
     logging.info(f"get_task_by_id triggered for ID {task_id}")
@@ -94,7 +94,7 @@ def get_task_by_id(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse("Error retrieving task", status_code=404)
 
 @app.function_name(name="update_task")
-@app.route(route="tasks/{id}", methods=["PUT"])
+@app.route(route="tasks/{id}", methods=["PUT"], auth_level=func.AuthLevel.ANONYMOUS)
 def update_task(req: func.HttpRequest) -> func.HttpResponse:
     task_id = req.route_params.get("id")
     logging.info(f"update_task triggered for ID {task_id}")
@@ -117,7 +117,7 @@ def update_task(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse("Error updating task", status_code=404)
 
 @app.function_name(name="complete_task")
-@app.route(route="tasks/{id}/complete", methods=["PATCH"])
+@app.route(route="tasks/{id}/complete", methods=["PATCH"], auth_level=func.AuthLevel.ANONYMOUS)
 def complete_task(req: func.HttpRequest) -> func.HttpResponse:
     task_id = req.route_params.get("id")
     logging.info(f"complete_task triggered for ID {task_id}")
@@ -137,7 +137,7 @@ def complete_task(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse("Error completing task", status_code=404)
 
 @app.function_name(name="delete_task")
-@app.route(route="tasks/{id}", methods=["DELETE"])
+@app.route(route="tasks/{id}", methods=["DELETE"], auth_level=func.AuthLevel.ANONYMOUS)
 def delete_task(req: func.HttpRequest) -> func.HttpResponse:
     task_id = req.route_params.get("id")
     logging.info(f"delete_task triggered for ID {task_id}")
@@ -152,7 +152,7 @@ def delete_task(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse("Error deleting task", status_code=404)
 
 @app.function_name(name="task_completion_stats")
-@app.route(route="analytics/completion", methods=["GET"])
+@app.route(route="analytics/completion", methods=["GET"], auth_level=func.AuthLevel.ANONYMOUS)
 def task_completion_stats(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("task_completion_stats triggered")
     try:
@@ -174,7 +174,7 @@ def task_completion_stats(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse("Internal Server Error", status_code=500)
 
 @app.function_name(name="productivity_metrics")
-@app.route(route="analytics/productivity", methods=["GET"])
+@app.route(route="analytics/productivity", methods=["GET"], auth_level=func.AuthLevel.ANONYMOUS)
 def productivity_metrics(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("productivity_metrics triggered")
     try:
