@@ -73,7 +73,7 @@ document.getElementById('task-form').addEventListener('submit', async function (
   const task = { title, description };
 
   try {
-    const res = await fetch('/api/tasks', {
+    const res = await fetch(API_BASE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(task)
@@ -83,7 +83,7 @@ document.getElementById('task-form').addEventListener('submit', async function (
 
     document.getElementById('title').value = '';
     document.getElementById('description').value = '';
-    await loadTasks(); // refresh the task list
+    await fetchTasks(); // refresh the task list
   } catch (err) {
     console.error(err);
     alert('Error creating task.');
