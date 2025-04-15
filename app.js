@@ -1,21 +1,17 @@
 const API_BASE_URL = 'https://myfunctionappz.azurewebsites.net/api/tasks';
 
 async function fetchTasks() {
-  try {
-    const response = await fetch(API_BASE_URL);
-    const tasks = await response.json();
-    renderTasks(tasks);
-  } catch (err) {
-    console.error('Error fetching tasks:', err);
-  }
+  const response = await fetch(API_BASE_URL);
+  const tasks = await response.json();
+  displayTasks(tasks);
 }
 
-function renderTasks(tasks) {
+function displayTasks(tasks) {
   const container = document.getElementById('tasks-container');
   container.innerHTML = '';
 
   if (tasks.length === 0) {
-    container.innerHTML = '<p>No tasks found.</p>';
+    container.innerHTML = '<p>No tasks yet.</p>';
     return;
   }
 
@@ -32,11 +28,11 @@ function renderTasks(tasks) {
     const completeBtn = document.createElement('button');
     completeBtn.textContent = '✅';
     completeBtn.disabled = task.status === 'completed';
-    completeBtn.onclick = () => completeTask(task.RowKey);
+    completeBtn.onclick = () => completeTask(task.id);
 
     const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = '🗑';
-    deleteBtn.onclick = () => deleteTask(task.RowKey);
+    deleteBtn.textContent = '🗑️';
+    deleteBtn.onclick = () => deleteTask(task.id);
 
     taskDiv.appendChild(title);
     taskDiv.appendChild(completeBtn);
@@ -47,27 +43,22 @@ function renderTasks(tasks) {
 }
 
 async function completeTask(id) {
-  try {
-    await fetch(`${API_BASE_URL}/${id}/complete`, {
-      method: 'PATCH'
-    });
-    await fetchTasks();
-  } catch (err) {
-    console.error('Error completing task:', err);
-  }
+  await fetch(`${API_BASE_URL}/${id}/complete`, {
+    method: 'PATCH'
+  });
+  fetchTasks();
 }
 
 async function deleteTask(id) {
-  try {
-    await fetch(`${API_BASE_URL}/${id}`, {
-      method: 'DELETE'
-    });
-    await fetchTasks();
-  } catch (err) {
-    console.error('Error deleting task:', err);
-  }
+  await fetch(`${API_BASE_URL}/${id}`, {
+    method: 'DELETE'
+  });
+  fetchTasks();
 }
 
+window.onload = fetchTasks;
+
+// 👇 Add this at the bottom of app.js
 document.getElementById('task-form').addEventListener('submit', async function (e) {
   e.preventDefault();
 
@@ -82,7 +73,7 @@ document.getElementById('task-form').addEventListener('submit', async function (
   const task = { title, description };
 
   try {
-    const res = await fetch(API_BASE_URL, {
+    const res = await fetch('/api/tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(task)
@@ -92,11 +83,10 @@ document.getElementById('task-form').addEventListener('submit', async function (
 
     document.getElementById('title').value = '';
     document.getElementById('description').value = '';
-    await fetchTasks();
+    await loadTasks(); // refresh the task list
   } catch (err) {
     console.error(err);
     alert('Error creating task.');
   }
 });
 
-window.onload = fetchTasks;
