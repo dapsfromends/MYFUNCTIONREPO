@@ -17,24 +17,35 @@ function displayTasks(tasks) {
 
   tasks.forEach(task => {
     const taskDiv = document.createElement('div');
-    taskDiv.className = 'task';
+    taskDiv.className = `task ${task.status}`;
 
+    // Title & status
     const title = document.createElement('span');
-    title.textContent = `${task.title} - ${task.status}`;
+    title.innerHTML = `<strong>${task.title}</strong> - ${task.status}`;
     if (task.status === 'completed') {
       title.style.textDecoration = 'line-through';
     }
 
+    // ✅ Creation Date
+    const date = document.createElement('div');
+    const createdDate = new Date(task.created_at).toLocaleString();
+    date.className = 'task-date';
+    date.textContent = `Created: ${createdDate}`;
+
+    // ✅ Complete Button
     const completeBtn = document.createElement('button');
     completeBtn.textContent = '✅';
     completeBtn.disabled = task.status === 'completed';
     completeBtn.onclick = () => completeTask(task.id);
 
+    // 🗑 Delete Button
     const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = '🗑️';
+    deleteBtn.textContent = '🗑';
     deleteBtn.onclick = () => deleteTask(task.id);
 
+    // Append all to taskDiv
     taskDiv.appendChild(title);
+    taskDiv.appendChild(date);
     taskDiv.appendChild(completeBtn);
     taskDiv.appendChild(deleteBtn);
 
@@ -58,7 +69,7 @@ async function deleteTask(id) {
 
 window.onload = fetchTasks;
 
-// 👇 Add this at the bottom of app.js
+// ✅ Handle form submission
 document.getElementById('task-form').addEventListener('submit', async function (e) {
   e.preventDefault();
 
@@ -89,4 +100,3 @@ document.getElementById('task-form').addEventListener('submit', async function (
     alert('Error creating task.');
   }
 });
-
