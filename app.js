@@ -11,7 +11,7 @@ function displayTasks(tasks) {
   container.innerHTML = '';
 
   if (tasks.length === 0) {
-    container.innerHTML = '<p>No tasks yet.</p>';
+    container.innerHTML = '<p style="text-align:center; color:#6b7280; font-style:italic;">No tasks yet. Start by creating one above!</p>';
     return;
   }
 
@@ -19,12 +19,17 @@ function displayTasks(tasks) {
     const taskDiv = document.createElement('div');
     taskDiv.className = `task ${task.status}`;
 
-    // Title & status
+    // Title
     const title = document.createElement('span');
-    title.innerHTML = `<strong>${task.title}</strong> - ${task.status}`;
+    title.innerHTML = `<strong>${task.title}</strong>`;
     if (task.status === 'completed') {
       title.style.textDecoration = 'line-through';
     }
+
+    // ✅ Status Badge
+    const statusBadge = document.createElement('span');
+    statusBadge.className = `status-tag ${task.status}`;
+    statusBadge.textContent = task.status.charAt(0).toUpperCase() + task.status.slice(1);
 
     // ✅ Creation Date
     const date = document.createElement('div');
@@ -43,8 +48,15 @@ function displayTasks(tasks) {
     deleteBtn.textContent = '🗑';
     deleteBtn.onclick = () => deleteTask(task.id);
 
-    // Append all to taskDiv
-    taskDiv.appendChild(title);
+    // Group title & badge together
+    const topRow = document.createElement('div');
+    topRow.style.display = 'flex';
+    topRow.style.justifyContent = 'space-between';
+    topRow.style.alignItems = 'center';
+    topRow.appendChild(title);
+    topRow.appendChild(statusBadge);
+
+    taskDiv.appendChild(topRow);
     taskDiv.appendChild(date);
     taskDiv.appendChild(completeBtn);
     taskDiv.appendChild(deleteBtn);
