@@ -1,13 +1,14 @@
 body {
   font-family: 'Segoe UI', sans-serif;
   margin: 2rem;
-  background-color: #f9f9f9;
+  background-color: #f0f4f8;
   color: #333;
 }
 
 h1 {
   text-align: center;
   color: #2d2d2d;
+  margin-bottom: 2rem;
 }
 
 form {
@@ -20,20 +21,23 @@ form {
 
 input[type="text"],
 textarea {
-  padding: 0.5rem;
+  padding: 0.6rem;
   border: 1px solid #ccc;
-  border-radius: 4px;
+  border-radius: 6px;
   flex: 1;
   min-width: 200px;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 button[type="submit"] {
   background-color: #0078d4;
   color: white;
-  padding: 0.6rem 1rem;
+  padding: 0.6rem 1.2rem;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
 }
 
 button[type="submit"]:hover {
@@ -44,32 +48,46 @@ button[type="submit"]:hover {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-width: 600px;
+  max-width: 700px;
   margin: 0 auto;
 }
 
 .task {
   background-color: white;
   padding: 1rem;
-  border: 1px solid #ddd;
-  border-left: 4px solid #0078d4;
-  border-radius: 4px;
+  border-radius: 8px;
+  border-left: 6px solid #0078d4;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
 }
 
 .task span {
-  flex: 1;
-  word-wrap: break-word;
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.task-date {
+  font-size: 0.85rem;
+  color: #666;
+  font-style: italic;
+  margin-top: -6px;
+}
+
+.task-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 .task button {
-  margin-left: 0.5rem;
-  padding: 0.4rem 0.6rem;
+  padding: 0.4rem 0.7rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 0.9rem;
 }
 
 .task button:first-of-type {
@@ -87,38 +105,17 @@ button[type="submit"]:hover {
   color: white;
 }
 
-.task {
-  border-left: 5px solid gray;
-  padding-left: 10px;
-  margin-bottom: 10px;
-}
-
 .task.completed {
-  border-color: green;
+  border-color: #28a745;
   background-color: #e6ffe6;
 }
 
 .task.in-progress {
   border-color: orange;
-  background-color: #fff4e6;
+  background-color: #fff7e6;
 }
 
 .task.pending {
   border-color: gray;
-  background-color: #f9f9f9;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.task {
-  animation: fadeIn 0.4s ease-in-out;
+  background-color: #f4f4f4;
 }
