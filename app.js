@@ -19,19 +19,26 @@ function displayTasks(tasks) {
     const taskDiv = document.createElement('div');
     taskDiv.className = `task ${task.status}`;
 
-    // Title
+    // 🏷️ Title & Status Badge
+    const topRow = document.createElement('div');
+    topRow.style.display = 'flex';
+    topRow.style.justifyContent = 'space-between';
+    topRow.style.alignItems = 'center';
+
     const title = document.createElement('span');
     title.innerHTML = `<strong>${task.title}</strong>`;
     if (task.status === 'completed') {
       title.style.textDecoration = 'line-through';
     }
 
-    // ✅ Status Badge
-    const statusBadge = document.createElement('span');
-    statusBadge.className = `status-tag ${task.status}`;
-    statusBadge.textContent = task.status.charAt(0).toUpperCase() + task.status.slice(1);
+    const badge = document.createElement('span');
+    badge.className = `status-tag ${task.status}`;
+    badge.textContent = task.status.charAt(0).toUpperCase() + task.status.slice(1);
 
-    // ✅ Creation Date
+    topRow.appendChild(title);
+    topRow.appendChild(badge);
+
+    // 🕒 Creation Date
     const date = document.createElement('div');
     const createdDate = new Date(task.created_at).toLocaleString();
     date.className = 'task-date';
@@ -48,19 +55,16 @@ function displayTasks(tasks) {
     deleteBtn.textContent = '🗑';
     deleteBtn.onclick = () => deleteTask(task.id);
 
-    // Group title & badge together
-    const topRow = document.createElement('div');
-    topRow.style.display = 'flex';
-    topRow.style.justifyContent = 'space-between';
-    topRow.style.alignItems = 'center';
-    topRow.appendChild(title);
-    topRow.appendChild(statusBadge);
+    // 📦 Grouped Buttons
+    const buttonGroup = document.createElement('div');
+    buttonGroup.className = 'button-group';
+    buttonGroup.appendChild(completeBtn);
+    buttonGroup.appendChild(deleteBtn);
 
+    // 📦 Compose Task Card
     taskDiv.appendChild(topRow);
     taskDiv.appendChild(date);
-    taskDiv.appendChild(completeBtn);
-    taskDiv.appendChild(deleteBtn);
-
+    taskDiv.appendChild(buttonGroup);
     container.appendChild(taskDiv);
   });
 }
@@ -81,7 +85,7 @@ async function deleteTask(id) {
 
 window.onload = fetchTasks;
 
-// ✅ Handle form submission
+// 📝 Handle Form Submission
 document.getElementById('task-form').addEventListener('submit', async function (e) {
   e.preventDefault();
 
@@ -106,7 +110,7 @@ document.getElementById('task-form').addEventListener('submit', async function (
 
     document.getElementById('title').value = '';
     document.getElementById('description').value = '';
-    await fetchTasks(); // refresh the task list
+    await fetchTasks(); // Refresh the list
   } catch (err) {
     console.error(err);
     alert('Error creating task.');
