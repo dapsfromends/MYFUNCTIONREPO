@@ -7,48 +7,21 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header>
+  <div class="container">
     <h1>TaskHub</h1>
-    <p>A Serverless Task Manager Powered by Azure Functions</p>
-  </header>
+    
+    <!-- Where tasks will be rendered -->
+    <h1>TaskHub</h1>
 
-  <section class="form-section">
-    <h2>Create a Task</h2>
     <form id="task-form">
-      <input type="text" id="title" placeholder="Title" required />
-      <textarea id="description" placeholder="Description"></textarea>
-      <button type="submit">Create Task</button>
+      <input type="text" id="title" placeholder="Task title" required />
+      <textarea id="description" placeholder="Task description"></textarea>
+      <button type="submit">Add Task</button>
     </form>
-  </section>
-
-  <section class="filter-section">
-    <label for="status-filter">Filter by Status:</label>
-    <select id="status-filter">
-      <option value="">All</option>
-      <option value="pending">Pending</option>
-      <option value="in-progress">In Progress</option>
-      <option value="completed">Completed</option>
-    </select>
-  </section>
-
-  <section class="tasks-section">
-    <h2>Tasks</h2>
-    <ul id="task-list"></ul>
-  </section>
-
-  <section class="analytics-section">
-    <h2>Analytics</h2>
-    <div id="analytics-boxes">
-      <div class="metric" id="completion-rate">Completion Rate: –</div>
-      <div class="metric" id="avg-completion">Avg Completion Time: –</div>
-      <div class="metric" id="tasks-created">Tasks Created: –</div>
-      <div class="metric" id="tasks-completed">Tasks Completed: –</div>
-    </div>
-  </section>
-
-  <footer>
-    <p>Deployed via GitHub Actions to Azure | <a href="https://github.com/dapsfromends/MYFUNCTIONREPO" target="_blank">GitHub</a></p>
-  </footer>
+    
+    
+    <div id="tasks-container">Loading...</div>
+  </div>
 
   <script src="app.js"></script>
 </body>
