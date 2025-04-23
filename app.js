@@ -110,7 +110,7 @@ document.getElementById('task-form').addEventListener('submit', async function (
 
     document.getElementById('title').value = '';
     document.getElementById('description').value = '';
-    await fetchTasks(); // Refresh the list
+    await fetchTasks(); 
   } catch (err) {
     console.error(err);
     alert('Error creating task.');

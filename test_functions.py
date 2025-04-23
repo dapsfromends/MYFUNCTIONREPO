@@ -8,7 +8,7 @@ from tests.helpers import DummyHttpRequest
 from azure.data.tables import TableServiceClient
 import os
 
-# Setup the table client once for reuse in the fixture
+
 connection_string = os.getenv("AZURE_TABLES_CONNECTION_STRING")
 table_service = TableServiceClient.from_connection_string(conn_str=connection_string)
 table_client = table_service.get_table_client("TasksTable")
@@ -40,7 +40,7 @@ def reset_tasks():
         if e["title"].startswith("Test"):
             table_client.delete_entity("task", e["RowKey"])
     yield
-    # Post-test cleanup
+    
     entities = table_client.query_entities("PartitionKey eq 'task'")
     for e in entities:
         if e["title"].startswith("Test"):
@@ -117,7 +117,7 @@ def test_get_task_by_id_not_found():
         body=None,
         params={}
     )
-    req.route_params = {"id": "fake-id"}  # ✅ This only works with DummyHttpRequest
+    req.route_params = {"id": "fake-id"}  
     resp = get_task_by_id(req)
     assert resp.status_code == 404
 
