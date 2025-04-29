@@ -150,15 +150,33 @@ async function fetchTaskCompletionStats() {
     const container = document.getElementById('analytics-container');
     container.innerHTML = `
       <h2 style="text-align:center;">📊 Task Completion Stats</h2>
-      <ul style="list-style-type:none; padding:0;">
-        <li><strong>Tasks Completed Today:</strong> ${data.tasks_completed_today}</li>
-      </ul>
+      
+      <div class="metric-center">
+        <div class="circle-chart">
+          <svg viewBox="0 0 36 36" class="circular-chart green">
+            <path class="circle-bg"
+              d="M18 2.0845
+                 a 15.9155 15.9155 0 0 1 0 31.831
+                 a 15.9155 15.9155 0 0 1 0 -31.831"
+            />
+            <path class="circle"
+              stroke-dasharray="${data.tasks_completed_today * 10}, 100"
+              d="M18 2.0845
+                 a 15.9155 15.9155 0 0 1 0 31.831
+                 a 15.9155 15.9155 0 0 1 0 -31.831"
+            />
+            <text x="18" y="20.35" class="percentage">${data.tasks_completed_today}</text>
+          </svg>
+          <div class="chart-label">Tasks Completed Today</div>
+        </div>
+      </div>
     `;
   } catch (err) {
     console.error(err);
     alert('Error fetching completion stats.');
   }
 }
+
 
 // Attach the new buttons to their actions
 document.getElementById('productivity-btn').addEventListener('click', fetchProductivityMetrics);

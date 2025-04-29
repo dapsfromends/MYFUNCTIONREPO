@@ -1,76 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+/* Base Styles */
 body {
-  font-family: 'Segoe UI', sans-serif;
-  margin: 2rem;
-  background-color: #f3f4f6;
+  font-family: 'Inter', sans-serif;
+  background-color: #f9fafb;
   color: #1f2937;
+  margin: 0;
+  padding: 2rem;
 }
 
 h1 {
   text-align: center;
-  color: #111827;
-  margin-bottom: 2rem;
   font-size: 2.5rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  color: #111827;
 }
 
+/* Container */
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+}
+
+/* Form */
 form {
-  margin-bottom: 2rem;
   display: flex;
-  gap: 1rem;
-  justify-content: center;
   flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  justify-content: center;
 }
 
 input[type="text"],
 textarea {
-  padding: 0.6rem 1rem;
+  padding: 0.75rem 1rem;
   border: 1px solid #d1d5db;
-  border-radius: 8px;
-  flex: 1;
-  min-width: 200px;
-  background-color: white;
+  border-radius: 0.5rem;
   font-size: 1rem;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  flex: 1 1 300px;
+  background-color: #fff;
+  transition: border-color 0.2s;
 }
 
-button[type="submit"] {
+input[type="text"]:focus,
+textarea:focus {
+  border-color: #2563eb;
+  outline: none;
+}
+
+button[type="submit"],
+button {
   background-color: #2563eb;
-  color: white;
-  padding: 0.6rem 1.2rem;
+  color: #ffffff;
   border: none;
-  border-radius: 8px;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
+  transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
-button[type="submit"]:hover {
+button:hover {
   background-color: #1d4ed8;
 }
 
+button:active {
+  transform: scale(0.98);
+}
+
+/* Tasks Section */
 #tasks-container {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  max-width: 700px;
-  margin: 0 auto;
+  gap: 1rem;
 }
 
+/* Task Card */
 .task {
   background-color: #ffffff;
-  padding: 1.2rem 1rem;
-  border-radius: 12px;
-  border-left: 6px solid #9ca3af;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  position: relative;
-  transition: box-shadow 0.2s ease;
+  border-left: 5px solid #9ca3af;
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: fadeInUp 0.4s ease forwards;
 }
 
 .task:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
 }
 
 .task span {
@@ -79,7 +103,7 @@ button[type="submit"]:hover {
 }
 
 .task-date {
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   color: #6b7280;
   font-style: italic;
 }
@@ -88,21 +112,18 @@ button[type="submit"]:hover {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 .task button {
-  padding: 0.45rem 0.8rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+  padding: 0.4rem 0.8rem;
   font-size: 0.9rem;
   font-weight: 500;
-  transition: background-color 0.2s ease;
+  border-radius: 6px;
 }
 
 .task button:first-of-type {
   background-color: #10b981;
-  color: white;
 }
 
 .task button:first-of-type:disabled {
@@ -112,7 +133,6 @@ button[type="submit"]:hover {
 
 .task button:last-of-type {
   background-color: #ef4444;
-  color: white;
 }
 
 .task.completed {
@@ -130,61 +150,131 @@ button[type="submit"]:hover {
   background-color: #f9fafb;
 }
 
-.task {
-  opacity: 0;
-  transform: translateY(10px);
-  animation: fadeInUp 0.4s ease forwards;
+/* Status Tags */
+.status-tag {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-left: 0.5rem;
+  text-transform: capitalize;
 }
 
+.status-tag.completed {
+  background-color: #10b981;
+}
+
+.status-tag.pending {
+  background-color: #6b7280;
+}
+
+.status-tag.in-progress {
+  background-color: #f59e0b;
+}
+
+/* Analytics Section */
+#analytics-container {
+  margin-top: 2rem;
+  background-color: #f3f4f6;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+}
+
+#analytics-container h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+#analytics-container ul {
+  list-style: none;
+  padding-left: 0;
+  line-height: 1.75;
+}
+
+/* Fade-in animation */
 @keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.status-tag {
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: bold;
-  color: white;
-  margin-left: 0.5rem;
-}
-
-.status-tag.completed {
-  background-color: #28a745;
-}
-
-.status-tag.pending {
-  background-color: #6c757d;
-}
-
-.status-tag.in-progress {
-  background-color: #fd7e14;
-}
-
-.button-group {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.button-group button {
-  flex: 1;
-  min-width: 80px;
-  text-align: center;
-}
-
+/* Responsive Design */
 @media (max-width: 600px) {
   .task {
     flex-direction: column;
-    align-items: flex-start;
   }
 
-  .button-group {
-    width: 100%;
+  form {
+    flex-direction: column;
+  }
+
+  .task-actions {
     justify-content: space-between;
+    flex-wrap: wrap;
+  }
+}
+
+.metric-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2rem;
+  flex-direction: column;
+}
+
+.circle-chart {
+  width: 140px;
+  height: 140px;
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+
+.circular-chart {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  max-height: 250px;
+}
+
+.circle-bg {
+  fill: none;
+  stroke: #e5e7eb;
+  stroke-width: 3.8;
+}
+
+.circle {
+  fill: none;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke: #10b981;
+  animation: progress 1.2s ease-out forwards;
+}
+
+.percentage {
+  fill: #1f2937;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  text-anchor: middle;
+  font-weight: bold;
+}
+
+.chart-label {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+/* Animate the stroke */
+@keyframes progress {
+  0% {
+    stroke-dasharray: 0 100;
   }
 }
