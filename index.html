@@ -9,15 +9,22 @@
 <body>
   <div class="container">
     <h1>TaskHub</h1>
-    
 
     <form id="task-form">
-      <input type="text" id="title" placeholder="Task Title" required />
+      <input type="text" id="title" placeholder="Task title" required />
       <textarea id="description" placeholder="Task description"></textarea>
       <button type="submit">Add Task</button>
     </form>
 
-    
+    <!-- 🔵 New Analytics Buttons -->
+    <div style="margin-top: 2rem; text-align: center;">
+      <button id="productivity-btn" type="button" style="margin: 0.5rem;">View Productivity Metrics</button>
+      <button id="completion-btn" type="button" style="margin: 0.5rem;">View Task Completion Stats</button>
+    </div>
+
+    <!-- 🔵 New Analytics Display Container -->
+    <div id="analytics-container" style="margin-top: 2rem; max-width: 700px; margin-left: auto; margin-right: auto;"></div>
+
     <div id="tasks-container">Loading...</div>
   </div>
 

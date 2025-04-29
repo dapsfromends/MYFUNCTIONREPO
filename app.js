@@ -116,3 +116,51 @@ document.getElementById('task-form').addEventListener('submit', async function (
     alert('Error creating task.');
   }
 });
+
+const ANALYTICS_BASE_URL = 'https://myfunctionappz.azurewebsites.net/api/analytics';
+
+async function fetchProductivityMetrics() {
+  try {
+    const res = await fetch(`${ANALYTICS_BASE_URL}/productivity`);
+    if (!res.ok) throw new Error('Failed to fetch productivity metrics');
+    const data = await res.json();
+
+    const container = document.getElementById('analytics-container');
+    container.innerHTML = `
+      <h2 style="text-align:center;">📈 Productivity Metrics</h2>
+      <ul style="list-style-type:none; padding:0;">
+        <li><strong>Tasks Created:</strong> ${data.tasks_created}</li>
+        <li><strong>Tasks Completed:</strong> ${data.tasks_completed}</li>
+        <li><strong>Completion Rate:</strong> ${data.completion_rate}%</li>
+        <li><strong>Average Completion Time:</strong> ${data.average_completion_time_minutes} minutes</li>
+      </ul>
+    `;
+  } catch (err) {
+    console.error(err);
+    alert('Error fetching productivity metrics.');
+  }
+}
+
+async function fetchTaskCompletionStats() {
+  try {
+    const res = await fetch(`${ANALYTICS_BASE_URL}/completion`);
+    if (!res.ok) throw new Error('Failed to fetch task completion stats');
+    const data = await res.json();
+
+    const container = document.getElementById('analytics-container');
+    container.innerHTML = `
+      <h2 style="text-align:center;">📊 Task Completion Stats</h2>
+      <ul style="list-style-type:none; padding:0;">
+        <li><strong>Tasks Completed Today:</strong> ${data.tasks_completed_today}</li>
+      </ul>
+    `;
+  } catch (err) {
+    console.error(err);
+    alert('Error fetching completion stats.');
+  }
+}
+
+// Attach the new buttons to their actions
+document.getElementById('productivity-btn').addEventListener('click', fetchProductivityMetrics);
+document.getElementById('completion-btn').addEventListener('click', fetchTaskCompletionStats);
+
