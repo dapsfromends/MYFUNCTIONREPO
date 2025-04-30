@@ -28,7 +28,7 @@ def get_table_client():
 @app.route(route="tasks", methods=["POST"], auth_level=func.AuthLevel.ANONYMOUS)
 def create_task(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("create_task function triggered")
-    time.sleep(5)
+    #time.sleep(5)
     try:
         data = json.loads(req.get_body())
         title = data.get("title")
@@ -62,7 +62,7 @@ def create_task(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="tasks", methods=["GET"], auth_level=func.AuthLevel.ANONYMOUS)
 def get_tasks(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("get_tasks function triggered")
-    time.sleep(5)
+    
     try:
         status_filter = req.params.get("status")
         table = get_table_client()

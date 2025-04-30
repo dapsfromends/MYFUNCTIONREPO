@@ -19,7 +19,7 @@ function displayTasks(tasks) {
     const taskDiv = document.createElement('div');
     taskDiv.className = `task ${task.status}`;
 
-    // 🏷️ Title & Status Badge
+    
     const topRow = document.createElement('div');
     topRow.style.display = 'flex';
     topRow.style.justifyContent = 'space-between';
@@ -38,30 +38,30 @@ function displayTasks(tasks) {
     topRow.appendChild(title);
     topRow.appendChild(badge);
 
-    // 🕒 Creation Date
+    
     const date = document.createElement('div');
     const createdDate = new Date(task.created_at).toLocaleString();
     date.className = 'task-date';
     date.textContent = `Created: ${createdDate}`;
 
-    // ✅ Complete Button
+    
     const completeBtn = document.createElement('button');
-    completeBtn.textContent = '✅';
+    completeBtn.textContent = 'Mark Task as Complete';
     completeBtn.disabled = task.status === 'completed';
     completeBtn.onclick = () => completeTask(task.id);
 
-    // 🗑 Delete Button
+    
     const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = '🗑';
+    deleteBtn.textContent = 'Delete Task';
     deleteBtn.onclick = () => deleteTask(task.id);
 
-    // 📦 Grouped Buttons
+    
     const buttonGroup = document.createElement('div');
     buttonGroup.className = 'button-group';
     buttonGroup.appendChild(completeBtn);
     buttonGroup.appendChild(deleteBtn);
 
-    // 📦 Compose Task Card
+    
     taskDiv.appendChild(topRow);
     taskDiv.appendChild(date);
     taskDiv.appendChild(buttonGroup);
@@ -85,7 +85,7 @@ async function deleteTask(id) {
 
 window.onload = fetchTasks;
 
-// 📝 Handle Form Submission
+
 document.getElementById('task-form').addEventListener('submit', async function (e) {
   e.preventDefault();
 
@@ -178,7 +178,7 @@ async function fetchTaskCompletionStats() {
 }
 
 
-// Attach the new buttons to their actions
+
 document.getElementById('productivity-btn').addEventListener('click', fetchProductivityMetrics);
 document.getElementById('completion-btn').addEventListener('click', fetchTaskCompletionStats);
 
