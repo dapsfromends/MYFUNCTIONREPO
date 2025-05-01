@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
-/* Base Styles */
+
 body {
   font-family: 'Inter', sans-serif;
   background-color: #f9fafb;
@@ -17,7 +17,7 @@ h1 {
   color: #111827;
 }
 
-/* Container */
+
 .container {
   max-width: 900px;
   margin: auto;
@@ -74,14 +74,14 @@ button:active {
   transform: scale(0.98);
 }
 
-/* Tasks Section */
+
 #tasks-container {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-/* Task Card */
+
 .task {
   background-color: #ffffff;
   border-left: 5px solid #9ca3af;
@@ -150,7 +150,7 @@ button:active {
   background-color: #f9fafb;
 }
 
-/* Status Tags */
+
 .status-tag {
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
@@ -173,7 +173,7 @@ button:active {
   background-color: #f59e0b;
 }
 
-/* Analytics Section */
+
 #analytics-container {
   margin-top: 2rem;
   background-color: #f3f4f6;
@@ -193,7 +193,7 @@ button:active {
   line-height: 1.75;
 }
 
-/* Fade-in animation */
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -205,7 +205,7 @@ button:active {
   }
 }
 
-/* Responsive Design */
+
 @media (max-width: 600px) {
   .task {
     flex-direction: column;
@@ -272,7 +272,7 @@ button:active {
   font-weight: 500;
 }
 
-/* Animate the stroke */
+
 @keyframes progress {
   0% {
     stroke-dasharray: 0 100;
