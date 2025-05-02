@@ -16,7 +16,7 @@ env:
   WORKING_DIR: '.'
 
 
-  #  First Job: Run tests to verify code quality
+  
 jobs:
   quality-check:
     name: Test & Verify
@@ -38,6 +38,7 @@ jobs:
         pip install pytest pytest-asyncio
         pip install -r requirements.txt
         
+    #Run tests
     - name: Run test suite
       run: |
         echo "Running tests for TaskHub API..."
@@ -45,7 +46,7 @@ jobs:
       env:
         AZURE_TABLES_CONNECTION_STRING: ${{ secrets.AZURE_TABLES_CONNECTION_STRING }}  
 
-        # Second Job : Deploy to Azure Function App
+        # Deploy to Azure Function App
   deploy-function:
     name: Deploy to Azure
     needs: quality-check
